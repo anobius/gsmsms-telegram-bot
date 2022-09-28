@@ -129,12 +129,14 @@ class CControllerTelegram(CTranscriber):
 
         updates = asd.get_updates(offset=offset ,timeout=10)
         for i in updates:
-            #todo: handle message types from chat migrations from group hierarchy changes and shit
+            #todo: handle message types from chat migrations from group hierarchy changes
             #  i.message.migrate_from_chat_id
             #  i.message.migrate_to_chat_id
+            #print(i)
             offset =i.update_id;
             if not i.effective_chat: #case for update not having chat info
                 continue;
+
             from_chat_id = i.effective_chat.id;
             if i.effective_chat.title:  # if group
                 metadata = "[" + str(from_chat_id) + "]G:" + i.effective_chat.title;
@@ -147,6 +149,10 @@ class CControllerTelegram(CTranscriber):
                 sample = i.edited_message;
             else:
                 sample = i.message;
+
+            if not sample: #if update received is not related to messages
+                continue;
+
             name = sample.from_user.name #todo: username filter
             text = sample.text
             datestr = sample.date.strftime("%Y-%m-%d %H:%M:%S %Z");
