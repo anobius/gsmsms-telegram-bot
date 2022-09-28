@@ -9,8 +9,8 @@ from .transcriber_base import CTranscriber
 
 from ..shared.log import getlasterrortraceback
 
-__CHAT_REGISTER = "This chat now receives sms updates!"
-__CHAT_DEREGISTER = "This chat has opted out of receiving sms updates."
+_CHAT_REGISTER = "This chat now receives sms updates!"
+_CHAT_DEREGISTER = "This chat has opted out of receiving sms updates."
 
 class CControllerTelegram(CTranscriber):
 
@@ -122,18 +122,19 @@ class CControllerTelegram(CTranscriber):
     def __getTelegramUpdates(self, asd ,offset=None) -> int:
 
         __command_list = {
-            "/start": lambda *args: self.registerId(*args[:2]) and asd.sendMessage(args[0],__CHAT_REGISTER),
-            "/stop": lambda *args: self.unregisterId(*args[:2]) and asd.sendMessage(args[0],__CHAT_DEREGISTER),
+            "/start": lambda *args: self.registerId(*args[:2]) and asd.sendMessage(args[0], _CHAT_REGISTER),
+            "/stop": lambda *args: self.unregisterId(*args[:2]) and asd.sendMessage(args[0], _CHAT_DEREGISTER),
             "__UNKNOWN": lambda *args: asd.sendMessage(args[0], "Invalid command")
         }
 
         updates = asd.get_updates(offset=offset ,timeout=10)
         for i in updates:
-            #todo: handle message types from chat migrations from group hierarchy changes
+            #todo: handle message types from chat migrations from group hierarchy changes and shit
             #  i.message.migrate_from_chat_id
             #  i.message.migrate_to_chat_id
-            i.message
             offset =i.update_id;
+            if not i.effective_chat: #case for update not having chat info
+                continue;
             from_chat_id = i.effective_chat.id;
             if i.effective_chat.title:  # if group
                 metadata = "[" + str(from_chat_id) + "]G:" + i.effective_chat.title;
@@ -146,7 +147,6 @@ class CControllerTelegram(CTranscriber):
                 sample = i.edited_message;
             else:
                 sample = i.message;
-
             name = sample.from_user.name #todo: username filter
             text = sample.text
             datestr = sample.date.strftime("%Y-%m-%d %H:%M:%S %Z");
